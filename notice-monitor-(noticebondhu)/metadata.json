@@ -1,0 +1,6 @@
+{
+  "name": "Notice Monitor (NoticeBondhu)",
+  "description": "Automated notice scraper and instant alert system for Bangladeshi college, board, and government websites via Telegram and Email.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
