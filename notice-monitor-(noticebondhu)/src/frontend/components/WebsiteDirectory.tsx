@@ -45,6 +45,7 @@ export const WebsiteDirectory: React.FC<WebsiteDirectoryProps> = ({
   const [intervalMinutes, setIntervalMinutes] = useState<number>(60);
   const [email, setEmail] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
+  const [ownershipToken, setOwnershipToken] = useState('');
   const [isJsHeavy, setIsJsHeavy] = useState(false);
 
   // Manual selector & testing
@@ -187,6 +188,7 @@ export const WebsiteDirectory: React.FC<WebsiteDirectoryProps> = ({
           intervalMinutes,
           email: email.trim(),
           telegramChatId: telegramChatId.trim() || undefined,
+          ownershipToken: ownershipToken.trim() || undefined,
           selector: manualSelector.trim() || detectedSelector || undefined,
           isJsHeavy
         })
@@ -205,6 +207,7 @@ export const WebsiteDirectory: React.FC<WebsiteDirectoryProps> = ({
         setNameBn('');
         setUrl('');
         setManualSelector('');
+        setOwnershipToken('');
         setDetectedSelector(null);
         setTestResult(null);
         if (onWebsiteAdded) onWebsiteAdded();
@@ -649,6 +652,19 @@ export const WebsiteDirectory: React.FC<WebsiteDirectoryProps> = ({
                       className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono text-slate-900 dark:text-white"
                     />
                   </div>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    {lang === 'bn' ? 'ম্যানেজমেন্ট টোকেন (আগের সাবস্ক্রিপশন আপডেট হলে)' : 'Management token (when updating an existing subscription)'}
+                  </label>
+                  <input
+                    type="password"
+                    autoComplete="off"
+                    value={ownershipToken}
+                    onChange={e => setOwnershipToken(e.target.value)}
+                    placeholder={lang === 'bn' ? 'স্বাগতম/অ্যালার্ট ইমেইলের টোকেন' : 'Token from your welcome/alert email'}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono text-slate-900 dark:text-white"
+                  />
                 </div>
               </div>
 

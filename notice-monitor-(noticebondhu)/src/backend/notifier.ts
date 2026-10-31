@@ -283,6 +283,28 @@ export class NotifierService {
     }
   }
 
+  public async sendSubscriptionWelcome(subscriber: Subscriber): Promise<void> {
+    if (!this.transporter) {
+      console.log(`[Notifier:Email:Simulated] Welcome message for: ${subscriber.email}`);
+      return;
+    }
+
+    const managementUrl = safeNotificationUrl(
+      `${this.appUrl}?view=unsubscribe&token=${encodeURIComponent(subscriber.unsubToken)}`
+    );
+    await this.transporter.sendMail({
+      from: process.env.SMTP_FROM || 'NoticeBondhu Alerts <alerts@noticebondhu.edu.bd>',
+      to: subscriber.email,
+      subject: 'NoticeBondhu subscription management link',
+      html: `
+        <p>প্রিয় ${escapeHtml(subscriber.name || 'শিক্ষার্থী')},</p>
+        <p>Your NoticeBondhu subscription is active. Keep this private link to manage or unsubscribe:</p>
+        <p><a href="${escapeHtml(managementUrl)}">Manage NoticeBondhu subscription</a></p>
+        <p>This link contains your private management token. Do not share it.</p>
+      `
+    });
+  }
+
   /**
    * Helper for testing Telegram bot setup directly from the Admin panel
    */

@@ -28,6 +28,7 @@ export const SubscribeView: React.FC<SubscribeViewProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
+  const [ownershipToken, setOwnershipToken] = useState('');
   const [showTelegramGuide, setShowTelegramGuide] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -71,7 +72,8 @@ export const SubscribeView: React.FC<SubscribeViewProps> = ({
           name: name.trim(),
           email: email.trim(),
           telegramChatId: telegramChatId.trim() || undefined,
-          websiteIds: selectedWebsiteIds
+          websiteIds: selectedWebsiteIds,
+          ownershipToken: ownershipToken.trim() || undefined
         })
       });
 
@@ -143,6 +145,7 @@ export const SubscribeView: React.FC<SubscribeViewProps> = ({
                 setName('');
                 setEmail('');
                 setTelegramChatId('');
+                setOwnershipToken('');
               }}
               className="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
             >
@@ -255,6 +258,20 @@ export const SubscribeView: React.FC<SubscribeViewProps> = ({
                 <p>{t.subTelegramStep3}</p>
               </div>
             )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              {lang === 'bn' ? 'সাবস্ক্রিপশন ম্যানেজমেন্ট টোকেন (শুধু আপডেটের জন্য)' : 'Subscription management token (updates only)'}
+            </label>
+            <input
+              type="password"
+              autoComplete="off"
+              value={ownershipToken}
+              onChange={e => setOwnershipToken(e.target.value)}
+              placeholder={lang === 'bn' ? 'আপনার স্বাগতম/অ্যালার্ট ইমেইলের টোকেন' : 'Token from your welcome/alert email'}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm"
+            />
           </div>
         </div>
 

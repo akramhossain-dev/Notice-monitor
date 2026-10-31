@@ -290,6 +290,12 @@ apiRouter.post('/subscribe', async (req, res) => {
       ownershipToken
     });
 
+    if (isNew) {
+      notifier.sendSubscriptionWelcome(subscriber).catch(err => {
+        console.error('[Routes] Failed to send subscription management email:', err);
+      });
+    }
+
     // Send a welcome alert / confirmation if telegram ID is given
     if (telegramChatId) {
       notifier.testTelegram(telegramChatId).catch(err => {
