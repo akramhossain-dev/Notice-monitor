@@ -28,7 +28,7 @@
 ├── /src
 │   ├── /backend             # Backend services & scraper engine
 │   │   ├── types.ts         # Data models (Website, Notice, Subscriber, Logs)
-│   │   ├── db.ts            # Persistent database layer (Firestore compatible)
+│   │   ├── db.ts            # Local JSON persistence layer
 │   │   ├── seed.ts          # Seed data with Bangladeshi educational boards & universities
 │   │   ├── scraper.ts       # Cheerio scraper with fallback & error handling
 │   │   ├── scheduler.ts     # node-cron scheduler for periodic checks
@@ -47,8 +47,7 @@
 │   │       ├── AdminDashboard.tsx # Password-protected admin suite & test tools
 │   │       ├── UnsubscribeView.tsx # 1-click unsubscribe handler
 │   │       └── Footer.tsx   # Bangladeshi student sentinel credits & links
-├── firebase-blueprint.json  # Firebase Firestore entity schema blueprint
-├── firestore.rules          # Hardened Firestore security rules
+├── .env.example             # Safe environment-variable template
 ├── server.ts                # Full-stack Express server (Vite middleware in dev)
 ├── package.json
 └── README.md
@@ -121,19 +120,11 @@ To send beautiful HTML email notifications via Gmail:
 
 ---
 
-### 4. How to Connect Firebase Firestore
+### 4. Data Storage
 
-The project includes `firebase-blueprint.json` and `firestore.rules`.
-To connect live Firebase:
-1. Create a Firebase project in the [Firebase Console](https://console.firebase.google.com/).
-2. Create a Cloud Firestore database in Native mode.
-3. Add your Firebase credentials in `.env`:
-   ```env
-   FIREBASE_PROJECT_ID="your-project-id"
-   FIREBASE_CLIENT_EMAIL="firebase-adminsdk@your-project-id.iam.gserviceaccount.com"
-   FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
-   ```
-4. By default, NoticeBondhu includes a self-healing persistent file store (`data/db.json`), making it work out-of-the-box in any cloud or local environment.
+NoticeBondhu currently stores state in `data/db.json`. The file is created automatically and is intentionally ignored by Git because it contains subscriber information and operational logs.
+
+For production, mount a persistent disk and point `NOTICEBONDHU_DATA_DIR` to it (the default is `./data`). Run a single application instance: ephemeral filesystems or multiple replicas can lose or overwrite state. A managed database adapter is required before horizontally scaling the service.
 
 ---
 
@@ -145,12 +136,13 @@ To connect live Firebase:
 3. Connect your repository.
 4. Set the following settings:
    - **Environment:** `Node`
-   - **Build Command:** `npm install && npm run build`
+   - **Build Command:** `npm ci && npm run build`
    - **Start Command:** `npm start`
 5. In **Environment Variables**, add:
    - `NODE_ENV=production`
    - `PORT=3000`
-   - `ADMIN_PASSWORD=your-secret-password`
+   - `ADMIN_PASSWORD=your-long-unique-password`
+   - `ADMIN_SESSION_SECRET=at-least-32-random-characters`
    - `TELEGRAM_BOT_TOKEN=...`
    - `SMTP_USER=...`
    - `SMTP_PASS=...`
@@ -159,7 +151,7 @@ To connect live Firebase:
 #### Option B: Deploy on Railway
 1. Go to [Railway.app](https://railway.app) and create a **New Project**.
 2. Select **Deploy from GitHub repo**.
-3. Under service settings, add your Environment Variables (`ADMIN_PASSWORD`, `TELEGRAM_BOT_TOKEN`, `SMTP_USER`, `SMTP_PASS`).
+3. Under service settings, add your Environment Variables (`ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `TELEGRAM_BOT_TOKEN`, `SMTP_USER`, `SMTP_PASS`).
 4. Railway will automatically detect Node.js, run `npm run build`, and execute `npm start`.
 
 ---
@@ -205,8 +197,12 @@ NoticeBondhu empowers any student or institution to add their college, universit
 | `/api/admin/logs` | GET | Admin | View check logs and alert dispatch logs |
 | `/api/admin/subscribers` | GET | Admin | View subscriber list |
 
+Updating an existing subscription requires its `ownershipToken`. Unsubscribe requests require the secure token from the email link; an email address alone is never accepted as authorization.
+
 ---
 
-## 🛡 Default Admin Password
-- **Password:** `admin123` (configurable via `ADMIN_PASSWORD` in `.env`)
-- Navigate to the **Admin Dashboard** tab to add new websites, test selectors, trigger manual scrape checks, and view live logs.
+## 🛡 Admin Authentication
+
+- Set both `ADMIN_PASSWORD` and a random `ADMIN_SESSION_SECRET` of at least 32 characters. There is no default password.
+- Successful login creates a signed, `httpOnly`, `SameSite=Strict` session cookie; the password is never returned to the browser or stored in `localStorage`.
+- Navigate to the **Admin Dashboard** tab to manage websites, run checks, and view logs.
