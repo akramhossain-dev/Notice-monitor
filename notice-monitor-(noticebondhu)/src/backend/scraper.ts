@@ -5,9 +5,15 @@
 
 import axios, { AxiosRequestConfig } from 'axios';
 import * as cheerio from 'cheerio';
+import http from 'node:http';
+import https from 'node:https';
 import { Website, Notice } from './types.js';
 import { db } from './db.js';
 import { notifier } from './notifier.js';
+import { assertSafeUrl, safeDnsLookup } from './security.js';
+
+const safeHttpAgent = new http.Agent({ lookup: safeDnsLookup });
+const safeHttpsAgent = new https.Agent({ lookup: safeDnsLookup });
 
 export interface ScrapedNoticeItem {
   title: string;
@@ -34,6 +40,7 @@ export class NoticeScraper {
    * Resiliently fetch HTML using axios with polite headers, timeout, and max size
    */
   public async fetchHtml(url: string, isJsHeavy = false): Promise<string> {
+    const safeUrl = await assertSafeUrl(url);
     const config: AxiosRequestConfig = {
       headers: {
         'User-Agent': USER_AGENT,
@@ -43,7 +50,10 @@ export class NoticeScraper {
         'Pragma': 'no-cache'
       },
       timeout: 12000,
-      maxRedirects: 5,
+      maxRedirects: 0,
+      maxContentLength: 5 * 1024 * 1024,
+      httpAgent: safeHttpAgent,
+      httpsAgent: safeHttpsAgent,
       responseType: 'text',
       validateStatus: (status) => status >= 200 && status < 400
     };
@@ -57,7 +67,7 @@ export class NoticeScraper {
       // return await page.content();
     }
 
-    const response = await axios.get(url, config);
+    const response = await axios.get(safeUrl.href, config);
     return response.data;
   }
 

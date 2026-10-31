@@ -7,6 +7,7 @@ import nodemailer, { Transporter } from 'nodemailer';
 import axios from 'axios';
 import { Notice, Subscriber } from './types.js';
 import { db } from './db.js';
+import { escapeHtml, safeNotificationUrl } from './security.js';
 
 export class NotifierService {
   private transporter: Transporter | null = null;
@@ -32,10 +33,7 @@ export class NotifierService {
           host,
           port,
           secure,
-          auth: { user, pass },
-          tls: {
-            rejectUnauthorized: false
-          }
+          auth: { user, pass }
         });
         console.log('[Notifier] SMTP Transporter configured for', user);
       } catch (err) {
@@ -83,18 +81,23 @@ export class NotifierService {
       return { success: false, error: 'No Telegram Chat ID' };
     }
 
+    const websiteName = escapeHtml(notice.websiteNameBn || notice.websiteName);
+    const noticeTitle = escapeHtml(notice.title);
+    const publishDate = notice.publishDate ? escapeHtml(notice.publishDate) : '';
+    const noticeLink = escapeHtml(safeNotificationUrl(notice.link));
+    const appUrl = escapeHtml(safeNotificationUrl(this.appUrl));
     const messageHtml = [
       `🔔 <b>নতুন নোটিশ প্রকাশিত হয়েছে!</b>`,
       ``,
-      `🏛 <b>প্রতিষ্ঠান:</b> ${notice.websiteNameBn || notice.websiteName}`,
-      `📌 <b>শিরোনাম:</b> ${notice.title}`,
-      notice.publishDate ? `📅 <b>তারিখ:</b> ${notice.publishDate}` : '',
+      `🏛 <b>প্রতিষ্ঠান:</b> ${websiteName}`,
+      `📌 <b>শিরোনাম:</b> ${noticeTitle}`,
+      publishDate ? `📅 <b>তারিখ:</b> ${publishDate}` : '',
       ``,
-      `🔗 <a href="${notice.link}">👉 মূল নোটিশ / PDF দেখতে এখানে ক্লিক করুন</a>`,
+      `🔗 <a href="${noticeLink}">👉 মূল নোটিশ / PDF দেখতে এখানে ক্লিক করুন</a>`,
       ``,
       `━━━━━━━━━━━━━━━━━━`,
       `🤖 <i>নোটিশবন্ধু (NoticeBondhu) - স্বয়ংক্রিয় শিক্ষা ও চাকরি নোটিশ অ্যালার্ট</i>`,
-      `🌐 ${this.appUrl}`
+      `🌐 ${appUrl}`
     ]
       .filter(line => line !== '')
       .join('\n');
@@ -169,9 +172,12 @@ export class NotifierService {
     notice: Notice
   ): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
     const fromAddress = process.env.SMTP_FROM || 'NoticeBondhu Alerts <alerts@noticebondhu.edu.bd>';
-    const unsubUrl = `${this.appUrl}?view=unsubscribe&token=${subscriber.unsubToken}&email=${encodeURIComponent(
-      subscriber.email
-    )}`;
+    const unsubUrl = `${this.appUrl}?view=unsubscribe&token=${encodeURIComponent(subscriber.unsubToken)}`;
+    const recipientName = escapeHtml(subscriber.name || 'শিক্ষার্থী');
+    const websiteName = escapeHtml(notice.websiteNameBn || notice.websiteName);
+    const noticeTitle = escapeHtml(notice.title);
+    const publishDate = notice.publishDate ? escapeHtml(notice.publishDate) : '';
+    const noticeLink = escapeHtml(safeNotificationUrl(notice.link));
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -200,16 +206,16 @@ export class NotifierService {
             <div class="badge">নোটিশবন্ধু (NoticeBondhu) সতর্কবার্তা</div>
           </div>
           <div class="content">
-            <p>প্রিয় <strong>${subscriber.name || 'শিক্ষার্থী'}</strong>,</p>
+            <p>প্রিয় <strong>${recipientName}</strong>,</p>
             <p>আপনার সাবস্ক্রাইব করা প্রতিষ্ঠান থেকে একটি নতুন নোটিশ প্রকাশিত হয়েছে:</p>
             
             <div class="notice-box">
-              <div class="notice-meta">🏛 <strong>${notice.websiteNameBn || notice.websiteName}</strong></div>
-              <div class="notice-title">${notice.title}</div>
-              ${notice.publishDate ? `<div class="notice-meta">📅 প্রকাশের তারিখ: ${notice.publishDate}</div>` : ''}
+              <div class="notice-meta">🏛 <strong>${websiteName}</strong></div>
+              <div class="notice-title">${noticeTitle}</div>
+              ${publishDate ? `<div class="notice-meta">📅 প্রকাশের তারিখ: ${publishDate}</div>` : ''}
               
               <div style="margin-top: 14px;">
-                <a href="${notice.link}" class="btn" target="_blank">মূল নোটিশ / PDF দেখুন ➔</a>
+                <a href="${noticeLink}" class="btn" target="_blank" rel="noopener noreferrer">মূল নোটিশ / PDF দেখুন ➔</a>
               </div>
             </div>
             
@@ -219,7 +225,7 @@ export class NotifierService {
           </div>
           <div class="footer">
             <p>আপনি NoticeBondhu এ নোটিশ অ্যালার্টের জন্য সাবস্ক্রাইব করেছিলেন।</p>
-            <p><a href="${unsubUrl}">আনসাবস্ক্রাইব করতে এখানে ক্লিক করুন (Unsubscribe)</a></p>
+            <p><a href="${escapeHtml(unsubUrl)}">আনসাবস্ক্রাইব করতে এখানে ক্লিক করুন (Unsubscribe)</a></p>
             <p>© ${new Date().getFullYear()} NoticeBondhu - Bangladesh Academic Notice Monitor</p>
           </div>
         </div>
@@ -246,7 +252,7 @@ export class NotifierService {
       await this.transporter.sendMail({
         from: fromAddress,
         to: subscriber.email,
-        subject: `[নতুন নোটিশ] ${notice.websiteNameBn || notice.websiteName}: ${notice.title.substring(0, 60)}...`,
+        subject: `[নতুন নোটিশ] ${notice.websiteNameBn || notice.websiteName}: ${notice.title.substring(0, 60)}...`.replace(/[\r\n]+/g, ' '),
         html: htmlContent
       });
 

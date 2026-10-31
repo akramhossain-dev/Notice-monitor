@@ -18,7 +18,6 @@ export interface WebsitePublic {
   enabled: boolean;
   isJsHeavy?: boolean;
   isCustom?: boolean;
-  creatorEmail?: string;
   approvalStatus?: 'approved' | 'pending' | 'rejected';
   lastCheckedAt?: string;
   lastCheckStatus?: 'success' | 'failed' | 'pending';
@@ -27,6 +26,7 @@ export interface WebsitePublic {
 
 export interface WebsiteAdmin extends WebsitePublic {
   selector: string;
+  creatorEmail?: string;
   lastCheckError?: string;
   createdAt: string;
 }
