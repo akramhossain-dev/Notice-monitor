@@ -61,6 +61,10 @@ test('admin and subscriber security boundaries work end to end', async () => {
     });
     const publicWebsites = await fetch(`${baseUrl}/api/websites`);
     const publicWebsiteList = await publicWebsites.json() as Record<string, unknown>[];
+    const managedSource = publicWebsiteList.find(site => site.id === 'all-notice-netlify');
+    assert.ok(managedSource);
+    assert.equal('fetchMode' in managedSource, false);
+    assert.equal('tavilyExtractUrl' in managedSource, false);
     const privateCreatorSite = publicWebsiteList.find(site => site.name === 'Private Creator Site');
     assert.ok(privateCreatorSite);
     assert.equal('selector' in privateCreatorSite, false);

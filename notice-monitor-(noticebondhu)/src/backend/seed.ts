@@ -7,41 +7,29 @@ import { Website, Notice } from './types.js';
 
 export const SEED_WEBSITES: Website[] = [
   {
-    id: 'dhaka-education-board',
-    name: 'Board of Intermediate and Secondary Education, Dhaka',
-    nameBn: 'মাধ্যমিক ও উচ্চমাধ্যমিক শিক্ষা বোর্ড, ঢাকা',
-    url: 'https://dhakaeducationboard.gov.bd/',
-    selector: '#noticelist a, .noticelist a, .views-field-title a, a[href*="notice"], table tr td a',
-    category: 'board',
-    intervalMinutes: 15,
+    id: 'all-notice-netlify',
+    name: 'All Notice',
+    nameBn: 'অল নোটিশ',
+    url: 'https://all-notice.netlify.app/',
+    selector: 'tavily-extract',
+    category: 'other',
+    intervalMinutes: 60,
     enabled: true,
-    isJsHeavy: false,
+    fetchMode: 'tavily',
     createdAt: '2026-01-01T00:00:00.000Z',
     totalNoticesFound: 0
   },
   {
-    id: 'national-university-bd',
-    name: 'National University Bangladesh',
-    nameBn: 'জাতীয় বিশ্ববিদ্যালয়, বাংলাদেশ',
-    url: 'https://www.nu.ac.bd/recent-notices.php',
-    selector: 'table.table a, .notice-board a, a[href*="notice"], .content-area a',
-    category: 'university',
+    id: 'mrist-notices',
+    name: 'Mymensingh Residential Institute of Science and Technology (MRIST)',
+    nameBn: 'ময়মনসিংহ রেসিডেনসিয়াল ইনস্টিটিউট অব সায়েন্স অ্যান্ড টেকনোলজি',
+    url: 'https://mrist.edu.bd/notices',
+    selector: 'tavily-extract',
+    category: 'college',
     intervalMinutes: 60,
     enabled: true,
-    isJsHeavy: false,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    totalNoticesFound: 0
-  },
-  {
-    id: 'dshe-gov-bd',
-    name: 'Directorate of Secondary and Higher Education (DSHE)',
-    nameBn: 'মাধ্যমিক ও উচ্চশিক্ষা অধিদপ্তর (মাউশি)',
-    url: 'https://dshe.gov.bd/',
-    selector: '.notices a, #notices a, table tr td a, a[href*="notice"]',
-    category: 'government',
-    intervalMinutes: 60,
-    enabled: true,
-    isJsHeavy: false,
+    fetchMode: 'tavily',
+    tavilyExtractUrl: 'https://mrist.edu.bd/notices-datatable',
     createdAt: '2026-01-01T00:00:00.000Z',
     totalNoticesFound: 0
   },
@@ -49,29 +37,62 @@ export const SEED_WEBSITES: Website[] = [
     id: 'bteb-gov-bd',
     name: 'Bangladesh Technical Education Board (BTEB)',
     nameBn: 'বাংলাদেশ কারিগরি শিক্ষা বোর্ড',
-    url: 'https://bteb.gov.bd/',
-    selector: '.notice_table a, table tr td a, a[href*="notice"]',
+    url: 'https://bteb.gov.bd/pages/notices',
+    selector: 'tavily-extract',
     category: 'board',
-    intervalMinutes: 360,
+    intervalMinutes: 60,
     enabled: true,
-    isJsHeavy: false,
+    fetchMode: 'tavily',
     createdAt: '2026-01-01T00:00:00.000Z',
     totalNoticesFound: 0
   },
   {
-    id: 'bpsc-gov-bd',
-    name: 'Bangladesh Public Service Commission (BPSC)',
-    nameBn: 'বাংলাদেশ সরকারি কর্ম কমিশন (বিপিএসসি)',
-    url: 'https://bpsc.gov.bd/',
-    selector: '#notices a, .notice-list a, table tr td a',
-    category: 'public_service',
+    id: 'duet-notices',
+    name: 'Dhaka University of Engineering & Technology (DUET)',
+    nameBn: 'ঢাকা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় (ডুয়েট)',
+    url: 'https://www.duet.ac.bd/notice/all-notices',
+    selector: 'tavily-extract',
+    category: 'university',
     intervalMinutes: 60,
     enabled: true,
-    isJsHeavy: false,
+    fetchMode: 'tavily',
     createdAt: '2026-01-01T00:00:00.000Z',
     totalNoticesFound: 0
   }
 ];
+
+const LEGACY_SEED_WEBSITE_IDS = new Set([
+  'dhaka-education-board',
+  'national-university-bd',
+  'dshe-gov-bd',
+  'bpsc-gov-bd'
+]);
+
+export function reconcileManagedWebsites(existingWebsites: Website[]): Website[] {
+  const managedById = new Map(SEED_WEBSITES.map(site => [site.id, site]));
+  const reconciled = existingWebsites.map(existing => {
+    const managed = managedById.get(existing.id);
+    if (managed) {
+      managedById.delete(existing.id);
+      return {
+        ...existing,
+        ...managed,
+        createdAt: existing.createdAt,
+        lastCheckedAt: existing.lastCheckedAt,
+        lastCheckStatus: existing.lastCheckStatus,
+        lastCheckError: existing.lastCheckError,
+        totalNoticesFound: existing.totalNoticesFound ?? managed.totalNoticesFound
+      };
+    }
+
+    if (!existing.isCustom && LEGACY_SEED_WEBSITE_IDS.has(existing.id)) {
+      return { ...existing, enabled: false };
+    }
+    return existing;
+  });
+
+  return [...managedById.values(), ...reconciled];
+}
 
 // Notices are populated only by verified scraper runs so demo content is never
 // presented as current operational data.

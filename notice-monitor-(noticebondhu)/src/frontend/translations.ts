@@ -18,13 +18,13 @@ export const translations = {
     navLiveStatus: 'মনিটর সচল',
 
     // Hero
-    heroHeadline: 'বাংলাদেশের সব শিক্ষা বোর্ড ও বিশ্ববিদ্যালয়ের নোটিশ',
+    heroHeadline: 'All Notice, MRIST, BTEB ও DUET-এর নোটিশ',
     heroSubheadline: 'প্রকাশের সাথে সাথে সরাসরি আপনার টেলিগ্রাম ও ইমেইলে অ্যালার্ট পান। আর কখনোই ফরম পূরণ, ভর্তি বা পরীক্ষার জরুরি নোটিশ মিস হবে না।',
     ctaSubscribe: 'অ্যালার্ট সাবস্ক্রাইব করুন',
     ctaViewNotices: 'সর্বশেষ নোটিশ দেখুন',
     ctaSupportedSites: 'সমর্থিত প্রতিষ্ঠানসমূহ',
     trustedByCount: '১৫,০০০+ শিক্ষার্থী যুক্ত',
-    avgDetectionTime: '< ১৫ মিনিটে শনাক্ত',
+    avgDetectionTime: 'প্রতি ১ ঘণ্টায় পর্যবেক্ষণ',
 
     // Stats
     statSubscribers: 'মোট সক্রিয় সাবস্ক্রাইবার',
@@ -34,11 +34,11 @@ export const translations = {
 
     // How it works
     howItWorksTitle: 'নোটিশবন্ধু যেভাবে কাজ করে',
-    howItWorksSubtitle: 'সম্পূর্ণ আধুনিক রোবটিক ও স্ক্র্যাপিং প্রযুক্তির মাধ্যমে স্বয়ংক্রিয়ভাবে নোটিশ পর্যবেক্ষণ',
+    howItWorksSubtitle: 'Tavily Extract API, নতুন নোটিশ শনাক্তকরণ এবং স্বয়ংক্রিয় ইমেইল অ্যালার্ট',
     step1Title: '১. প্রতিষ্ঠান নির্বাচন',
-    step1Desc: 'আপনার পছন্দের শিক্ষা বোর্ড, জাতীয় বিশ্ববিদ্যালয়, মাউশি বা বিপিএসসি তালিকা থেকে সিলেক্ট করুন।',
-    step2Title: '২. রোবটিক পর্যবেক্ষণ',
-    step2Desc: 'আমাদের নোটিশ স্ক্র্যাপার প্রতি ১৫ মিনিট বা ১ ঘণ্টা পরপর মূল সরকারি পোর্টালগুলো নিয়মিত স্ক্যান করে।',
+    step1Desc: 'All Notice, MRIST, BTEB বা DUET থেকে যে প্রতিষ্ঠানগুলোর অ্যালার্ট চান সেগুলো নির্বাচন করুন।',
+    step2Title: '২. Tavily পর্যবেক্ষণ',
+    step2Desc: 'Tavily Extract API প্রতি ঘণ্টায় চারটি নির্দিষ্ট উৎস থেকে নতুন নোটিশ সংগ্রহ করে।',
     step3Title: '৩. নতুন নোটিশ ফিল্টার',
     step3Desc: 'আগের সব নোটিশের সাথে তুলনা করে কেবল একদম নতুন ও হালনাগাদ সার্কুলার শনাক্ত করে ডাটাবেজে রেকর্ড করা হয়।',
     step4Title: '৪. তাৎক্ষণিক নোটিফিকেশন',
@@ -203,13 +203,13 @@ export const translations = {
     navLiveStatus: 'Monitor Active',
 
     // Hero
-    heroHeadline: 'All Bangladesh College, Board & Govt Notices',
+    heroHeadline: 'Notices from All Notice, MRIST, BTEB & DUET',
     heroSubheadline: 'Get instant Telegram and Email alerts the moment new circulars, admission routines, or exam notices are published. Never miss a deadline again.',
     ctaSubscribe: 'Subscribe to Alerts',
     ctaViewNotices: 'Browse Recent Notices',
     ctaSupportedSites: 'Supported Portals',
     trustedByCount: '15,000+ Students Joined',
-    avgDetectionTime: '< 15m Detection',
+    avgDetectionTime: 'Hourly Monitoring',
 
     // Stats
     statSubscribers: 'Active Subscribers',
@@ -219,11 +219,11 @@ export const translations = {
 
     // How it works
     howItWorksTitle: 'How NoticeBondhu Operates',
-    howItWorksSubtitle: 'End-to-end automated scraping, real-time diff detection, and multi-channel instant broadcasting',
+    howItWorksSubtitle: 'Tavily-powered discovery, new-notice detection, and automated email alerts',
     step1Title: '1. Select Portals',
-    step1Desc: 'Choose your preferred education boards, National University, DSHE, or BPSC from the directory.',
-    step2Title: '2. Robotic Crawling',
-    step2Desc: 'Our polite scraper scans target notice pages every 15 minutes or 1 hour using CSS selectors.',
+    step1Desc: 'Choose the All Notice, MRIST, BTEB, or DUET sources you want to follow.',
+    step2Title: '2. Tavily Monitoring',
+    step2Desc: 'Tavily Extract checks the four exact source pages every hour for newly published notices.',
     step3Title: '3. Diff & New Notice Detection',
     step3Desc: 'New notices are isolated against the database. Zero false-alarms or duplicate spam.',
     step4Title: '4. Multi-Channel Alerts',

@@ -32,10 +32,10 @@ export const Footer: React.FC<FooterProps> = ({ lang, setCurrentPage }) => {
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md leading-relaxed">
               {lang === 'bn'
-                ? 'বাংলাদেশের সকল শিক্ষা বোর্ড, জাতীয় বিশ্ববিদ্যালয় ও সরকারি পোর্টালের নোটিশ স্বয়ংক্রিয়ভাবে পর্যবেক্ষণ করে তাৎক্ষণিক টেলিগ্রাম ও ইমেইল অ্যালার্ট প্রদানকারী প্ল্যাটফর্ম।'
-                : 'Automated notice scraping and instant alert sentinel for Bangladeshi students across all education boards, National University, and government ministries.'}
+                ? 'All Notice, MRIST, BTEB ও DUET-এর হালনাগাদ নোটিশ পর্যবেক্ষণ করে তাৎক্ষণিক টেলিগ্রাম ও ইমেইল অ্যালার্ট প্রদানকারী প্ল্যাটফর্ম।'
+                : 'Automated notice monitoring and instant alerts for All Notice, MRIST, BTEB, and DUET.'}
             </p>
-            <div className="flex items-center gap-3 pt-2 text-xs text-slate-500">
+            <div className="flex flex-wrap items-center gap-3 pt-2 text-xs text-slate-500">
               <span className="inline-flex items-center gap-1">
                 <Send className="w-3.5 h-3.5 text-sky-500" />
                 Telegram Bot API
@@ -48,7 +48,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, setCurrentPage }) => {
               <span>•</span>
               <span className="inline-flex items-center gap-1">
                 <Code className="w-3.5 h-3.5 text-amber-500" />
-                Cheerio Scraper
+                Tavily Extract API
               </span>
             </div>
           </div>
@@ -102,45 +102,45 @@ export const Footer: React.FC<FooterProps> = ({ lang, setCurrentPage }) => {
             <ul className="space-y-2 text-xs">
               <li>
                 <a
-                  href="https://dhakaeducationboard.gov.bd/"
+                  href="https://all-notice.netlify.app/"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-emerald-600 flex items-center gap-1"
                 >
-                  <span>Dhaka Board</span>
+                  <span>All Notice</span>
                   <ExternalLink className="w-3 h-3 text-slate-400" />
                 </a>
               </li>
               <li>
                 <a
-                  href="https://www.nu.ac.bd/"
+                  href="https://mrist.edu.bd/notices"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-emerald-600 flex items-center gap-1"
                 >
-                  <span>National University</span>
+                  <span>MRIST</span>
                   <ExternalLink className="w-3 h-3 text-slate-400" />
                 </a>
               </li>
               <li>
                 <a
-                  href="https://dshe.gov.bd/"
+                  href="https://bteb.gov.bd/pages/notices"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-emerald-600 flex items-center gap-1"
                 >
-                  <span>DSHE (মাউশি)</span>
+                  <span>BTEB</span>
                   <ExternalLink className="w-3 h-3 text-slate-400" />
                 </a>
               </li>
               <li>
                 <a
-                  href="https://bpsc.gov.bd/"
+                  href="https://www.duet.ac.bd/notice/all-notices"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-emerald-600 flex items-center gap-1"
                 >
-                  <span>BPSC (বিপিএসসি)</span>
+                  <span>DUET</span>
                   <ExternalLink className="w-3 h-3 text-slate-400" />
                 </a>
               </li>

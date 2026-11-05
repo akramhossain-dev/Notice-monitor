@@ -7,7 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { Website, Notice, Subscriber, Subscription, AlertLog, CheckLog, SystemStats, AdminSettings } from './types.js';
-import { SEED_WEBSITES, SEED_NOTICES } from './seed.js';
+import { reconcileManagedWebsites, SEED_WEBSITES, SEED_NOTICES } from './seed.js';
 import { isAuthorizedSubscriber } from './security.js';
 
 interface DatabaseSchema {
@@ -68,6 +68,8 @@ class DatabaseService {
         this.data.check_logs = [];
         this.save();
       }
+      this.data.websites = reconcileManagedWebsites(this.data.websites);
+      this.save();
       this.isLoaded = true;
     } catch (err) {
       console.error('[DB] Failed to initialize file storage:', err);
@@ -224,11 +226,10 @@ class DatabaseService {
     };
   }
 
-  public hasNotice(websiteId: string, link: string, title: string): boolean {
+  public hasNotice(websiteId: string, link: string): boolean {
     const normLink = link.trim().toLowerCase();
-    const normTitle = title.trim().toLowerCase();
     return this.data.notices.some(
-      n => n.websiteId === websiteId && (n.link.trim().toLowerCase() === normLink || n.title.trim().toLowerCase() === normTitle)
+      n => n.websiteId === websiteId && n.link.trim().toLowerCase() === normLink
     );
   }
 

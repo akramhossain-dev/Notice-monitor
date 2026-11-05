@@ -7,7 +7,8 @@
 
 ## 🌟 Features
 
-- **Robotic Web Scraper**: Built with `cheerio` & `axios` with polite User-Agents, custom CSS selectors, automatic relative-to-absolute URL conversion, and rate limiting.
+- **Tavily Notice Extraction**: Uses Tavily Extract on each exact source page to monitor All Notice, MRIST, BTEB, and DUET every hour.
+- **Custom-site Scraper**: User-submitted notice pages still use the SSRF-protected Cheerio/axios detector with custom CSS selectors.
 - **Diff & New Notice Isolation**: Detects genuine new circulars and avoids sending duplicate alerts or spamming baseline existing notices on initial runs.
 - **Telegram Bot API**: Push notifications directly to students' Telegram mobile/desktop app with formatted HTML messages and direct PDF links.
 - **Nodemailer SMTP**: Responsive HTML emails in Bangla and English containing official notice details and a secure 1-click unsubscribe link.
@@ -30,7 +31,8 @@
 │   │   ├── types.ts         # Data models (Website, Notice, Subscriber, Logs)
 │   │   ├── db.ts            # Local JSON persistence layer
 │   │   ├── seed.ts          # Seed data with Bangladeshi educational boards & universities
-│   │   ├── scraper.ts       # Cheerio scraper with fallback & error handling
+│   │   ├── tavily.ts       # Exact-page Tavily Extract client
+│   │   ├── scraper.ts       # Tavily/direct collection, diffing, persistence, alerts
 │   │   ├── scheduler.ts     # node-cron scheduler for periodic checks
 │   │   ├── notifier.ts      # Telegram Bot API & Nodemailer email dispatcher
 │   │   └── routes.ts        # Express REST API routes (/api/*)
@@ -77,7 +79,21 @@
 
 ---
 
-### 2. How to Create a Telegram Bot with @BotFather
+### 2. Configure Tavily
+
+Create a Tavily API key and set it only in `.env` or your deployment environment:
+
+```env
+TAVILY_API_KEY="tvly-your-key"
+TAVILY_EXTRACT_DEPTH="advanced"
+NOTICE_FAILURE_RETRY_MINUTES="5"
+```
+
+The key is sent as a Bearer token to `https://api.tavily.com/extract`. Each request targets the configured notice page, and extracted links are restricted to that source domain. The first successful run creates a baseline without emailing old notices; later runs save and alert only newly discovered URLs.
+
+Official Tavily API reference: https://docs.tavily.com/documentation/api-reference/endpoint/extract
+
+### 3. How to Create a Telegram Bot with @BotFather
 
 To send instant Telegram notifications to students:
 
@@ -97,7 +113,7 @@ To send instant Telegram notifications to students:
 
 ---
 
-### 3. How to Set Up Gmail SMTP App Password
+### 4. How to Set Up Gmail SMTP App Password
 
 To send beautiful HTML email notifications via Gmail:
 
@@ -120,7 +136,7 @@ To send beautiful HTML email notifications via Gmail:
 
 ---
 
-### 4. Data Storage
+### 5. Data Storage
 
 NoticeBondhu currently stores state in `data/db.json`. The file is created automatically and is intentionally ignored by Git because it contains subscriber information and operational logs.
 
@@ -128,7 +144,7 @@ For production, mount a persistent disk and point `NOTICEBONDHU_DATA_DIR` to it 
 
 ---
 
-### 5. How to Deploy to Render or Railway
+### 6. How to Deploy to Render or Railway
 
 #### Option A: Deploy on Render
 1. Push your code to GitHub.
@@ -143,15 +159,20 @@ For production, mount a persistent disk and point `NOTICEBONDHU_DATA_DIR` to it 
    - `PORT=3000`
    - `ADMIN_PASSWORD=your-long-unique-password`
    - `ADMIN_SESSION_SECRET=at-least-32-random-characters`
+   - `TAVILY_API_KEY=...`
    - `TELEGRAM_BOT_TOKEN=...`
+   - `SMTP_HOST=smtp.gmail.com`
+   - `SMTP_PORT=587`
+   - `SMTP_SECURE=false`
    - `SMTP_USER=...`
    - `SMTP_PASS=...`
+   - `SMTP_FROM=NoticeBondhu Alerts <your-email@gmail.com>`
 6. Click **Deploy Web Service**!
 
 #### Option B: Deploy on Railway
 1. Go to [Railway.app](https://railway.app) and create a **New Project**.
 2. Select **Deploy from GitHub repo**.
-3. Under service settings, add your Environment Variables (`ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `TELEGRAM_BOT_TOKEN`, `SMTP_USER`, `SMTP_PASS`).
+3. Under service settings, add your Environment Variables (`ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `TAVILY_API_KEY`, `TELEGRAM_BOT_TOKEN`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`).
 4. Railway will automatically detect Node.js, run `npm run build`, and execute `npm start`.
 
 ---

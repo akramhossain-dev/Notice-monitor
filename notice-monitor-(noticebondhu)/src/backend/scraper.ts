@@ -11,6 +11,7 @@ import { Website, Notice } from './types.js';
 import { db } from './db.js';
 import { notifier } from './notifier.js';
 import { assertSafeUrl, safeDnsLookup } from './security.js';
+import { tavilyNoticeProvider, TavilyNoticeItem } from './tavily.js';
 
 const safeHttpAgent = new http.Agent({ lookup: safeDnsLookup });
 const safeHttpsAgent = new https.Agent({ lookup: safeDnsLookup });
@@ -32,10 +33,31 @@ export interface ScrapeResult {
   newNotices: Notice[];
 }
 
+interface TavilyProvider {
+  fetchNotices(website: Website): Promise<TavilyNoticeItem[]>;
+}
+
+type ScraperStorage = Pick<typeof db,
+  'hasNotice' |
+  'addNotice' |
+  'updateWebsite' |
+  'addCheckLog' |
+  'getSubscribersForWebsite' |
+  'getWebsites'
+>;
+
+type AlertDispatcher = Pick<typeof notifier, 'dispatchAlerts'>;
+
 // Polite bot User-Agent respecting academic & government portals
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) NoticeBondhu-Academic-Monitor/1.0 (Bangladesh Education Alert System; +https://noticebondhu.edu.bd)';
 
 export class NoticeScraper {
+  constructor(
+    private readonly tavilyProvider: TavilyProvider = tavilyNoticeProvider,
+    private readonly storage: ScraperStorage = db,
+    private readonly alertDispatcher: AlertDispatcher = notifier
+  ) {}
+
   /**
    * Resiliently fetch HTML using axios with polite headers, timeout, and max size
    */
@@ -154,6 +176,15 @@ export class NoticeScraper {
     return results.slice(0, 25);
   }
 
+  public async fetchNoticeItems(website: Website): Promise<ScrapedNoticeItem[]> {
+    if (website.fetchMode === 'tavily') {
+      return this.tavilyProvider.fetchNotices(website);
+    }
+
+    const html = await this.fetchHtml(website.url, website.isJsHeavy);
+    return this.extractNotices(html, website.selector, website.url);
+  }
+
   /**
    * Scrape a single website, detect new notices, and dispatch alerts
    */
@@ -163,21 +194,16 @@ export class NoticeScraper {
     const newNotices: Notice[] = [];
 
     try {
-      let html = '';
-      
-      // If URL is an internal mock or live site
-      html = await this.fetchHtml(website.url, website.isJsHeavy);
-
-      const items = this.extractNotices(html, website.selector, website.url);
+      const items = await this.fetchNoticeItems(website);
       noticesFound = items.length;
 
       // Determine if this is the website's very first scrape
       const isFirstRun = (website.totalNoticesFound ?? 0) === 0 && !website.lastCheckedAt;
 
       for (const item of items) {
-        const exists = db.hasNotice(website.id, item.link, item.title);
+        const exists = this.storage.hasNotice(website.id, item.link);
         if (!exists) {
-          const added = db.addNotice({
+          const added = this.storage.addNotice({
             websiteId: website.id,
             websiteName: website.name,
             websiteNameBn: website.nameBn,
@@ -194,7 +220,7 @@ export class NoticeScraper {
       const durationMs = Date.now() - startTime;
 
       // Update website metadata in DB
-      db.updateWebsite(website.id, {
+      this.storage.updateWebsite(website.id, {
         lastCheckedAt: new Date().toISOString(),
         lastCheckStatus: 'success',
         lastCheckError: undefined,
@@ -202,7 +228,7 @@ export class NoticeScraper {
       });
 
       // Record check log
-      db.addCheckLog({
+      this.storage.addCheckLog({
         websiteId: website.id,
         websiteName: website.name,
         status: 'success',
@@ -213,11 +239,11 @@ export class NoticeScraper {
 
       // Send alerts only for non-initial runs and when new notices exist
       if (!isFirstRun && newNotices.length > 0) {
-        const subscribers = db.getSubscribersForWebsite(website.id);
+        const subscribers = this.storage.getSubscribersForWebsite(website.id);
         console.log(`[Scraper] Found ${newNotices.length} new notice(s) for ${website.name}. Alerting ${subscribers.length} subscriber(s)...`);
         
         for (const notice of newNotices) {
-          await notifier.dispatchAlerts(notice, subscribers);
+          await this.alertDispatcher.dispatchAlerts(notice, subscribers);
         }
       } else if (isFirstRun) {
         console.log(`[Scraper] Initial baseline run completed for ${website.name}. Saved ${newNotices.length} existing notices without alerts.`);
@@ -237,13 +263,13 @@ export class NoticeScraper {
       const errorMessage = err?.message || 'Unknown network or parsing error';
       console.error(`[Scraper] Error scraping ${website.name} (${website.url}):`, errorMessage);
 
-      db.updateWebsite(website.id, {
+      this.storage.updateWebsite(website.id, {
         lastCheckedAt: new Date().toISOString(),
         lastCheckStatus: 'failed',
         lastCheckError: errorMessage
       });
 
-      db.addCheckLog({
+      this.storage.addCheckLog({
         websiteId: website.id,
         websiteName: website.name,
         status: 'failed',
@@ -270,7 +296,7 @@ export class NoticeScraper {
    * Run scraper across all active websites with rate-limiting delay between requests
    */
   public async scrapeAllActiveWebsites(): Promise<ScrapeResult[]> {
-    const websites = db.getWebsites(false); // only enabled
+    const websites = this.storage.getWebsites(false); // only enabled
     const results: ScrapeResult[] = [];
 
     console.log(`[Scraper] Starting scheduled scrape run for ${websites.length} active website(s)...`);

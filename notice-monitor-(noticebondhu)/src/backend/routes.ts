@@ -49,7 +49,15 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
 const rateLimitBuckets = new Map<string, number[]>();
 
 function toPublicWebsite(website: ReturnType<typeof db.getWebsites>[number]) {
-  const { selector, creatorEmail, creatorTelegramChatId, lastCheckError, ...publicFields } = website;
+  const {
+    selector,
+    creatorEmail,
+    creatorTelegramChatId,
+    lastCheckError,
+    fetchMode,
+    tavilyExtractUrl,
+    ...publicFields
+  } = website;
   return publicFields;
 }
 

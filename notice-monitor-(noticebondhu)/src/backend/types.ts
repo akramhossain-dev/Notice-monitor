@@ -15,6 +15,8 @@ export interface Website {
   intervalMinutes: number; // 15, 60, 360
   enabled: boolean;
   isJsHeavy?: boolean;
+  fetchMode?: 'direct' | 'tavily';
+  tavilyExtractUrl?: string;
   isCustom?: boolean;
   creatorEmail?: string;
   creatorTelegramChatId?: string;
