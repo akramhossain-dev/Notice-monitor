@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Bell, Mail, Send, CheckCircle2, HelpCircle, CheckSquare, Square, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { Bell, Mail, CheckCircle2, CheckSquare, Square, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 import { Language, WebsitePublic, PageView } from '../types.js';
 import { translations } from '../translations.js';
 
@@ -27,9 +27,7 @@ export const SubscribeView: React.FC<SubscribeViewProps> = ({
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [telegramChatId, setTelegramChatId] = useState('');
   const [ownershipToken, setOwnershipToken] = useState('');
-  const [showTelegramGuide, setShowTelegramGuide] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -71,7 +69,6 @@ export const SubscribeView: React.FC<SubscribeViewProps> = ({
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim(),
-          telegramChatId: telegramChatId.trim() || undefined,
           websiteIds: selectedWebsiteIds,
           ownershipToken: ownershipToken.trim() || undefined
         })
@@ -124,12 +121,6 @@ export const SubscribeView: React.FC<SubscribeViewProps> = ({
               <span className="text-slate-500 dark:text-slate-400">{lang === 'bn' ? 'অনুসরণকৃত প্রতিষ্ঠান:' : 'Followed Portals:'}</span>
               <span className="font-bold text-emerald-600 dark:text-emerald-400">{successInfo.count} টি</span>
             </div>
-            {telegramChatId && (
-              <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-slate-400">{lang === 'bn' ? 'টেলিগ্রাম চ্যাট আইডি:' : 'Telegram Chat ID:'}</span>
-                <span className="font-mono font-medium text-slate-900 dark:text-white">{telegramChatId}</span>
-              </div>
-            )}
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -144,7 +135,6 @@ export const SubscribeView: React.FC<SubscribeViewProps> = ({
                 setIsSuccess(false);
                 setName('');
                 setEmail('');
-                setTelegramChatId('');
                 setOwnershipToken('');
               }}
               className="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
@@ -219,45 +209,6 @@ export const SubscribeView: React.FC<SubscribeViewProps> = ({
                 {t.subEmailHint}
               </p>
             </div>
-          </div>
-
-          {/* Telegram Chat ID */}
-          <div className="pt-2">
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Send className="w-4 h-4 text-sky-500" />
-                <span>{t.subTelegramLabel}</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowTelegramGuide(!showTelegramGuide)}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-                <span>{t.subTelegramHelpBtn}</span>
-              </button>
-            </div>
-
-            <input
-              type="text"
-              value={telegramChatId}
-              onChange={e => setTelegramChatId(e.target.value)}
-              placeholder={t.subTelegramPlaceholder}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm"
-            />
-
-            {/* Telegram Guide Box */}
-            {showTelegramGuide && (
-              <div className="mt-3 p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 text-xs text-sky-900 dark:text-sky-200 space-y-1.5 animate-in fade-in">
-                <div className="font-bold flex items-center gap-1.5 text-sm mb-1">
-                  <Send className="w-4 h-4 text-sky-600" />
-                  <span>{t.subTelegramGuideTitle}</span>
-                </div>
-                <p>{t.subTelegramStep1}</p>
-                <p>{t.subTelegramStep2}</p>
-                <p>{t.subTelegramStep3}</p>
-              </div>
-            )}
           </div>
 
           <div>

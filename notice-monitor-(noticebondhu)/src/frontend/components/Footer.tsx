@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Bell, Heart, Send, Mail, Shield, ExternalLink, Code } from 'lucide-react';
+import { Bell, Heart, Mail, Shield, ExternalLink, Code } from 'lucide-react';
 import { Language, PageView } from '../types.js';
 import { translations } from '../translations.js';
 
@@ -32,15 +32,10 @@ export const Footer: React.FC<FooterProps> = ({ lang, setCurrentPage }) => {
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md leading-relaxed">
               {lang === 'bn'
-                ? 'All Notice, MRIST, BTEB ও DUET-এর হালনাগাদ নোটিশ পর্যবেক্ষণ করে তাৎক্ষণিক টেলিগ্রাম ও ইমেইল অ্যালার্ট প্রদানকারী প্ল্যাটফর্ম।'
+                ? 'All Notice, MRIST, BTEB ও DUET-এর হালনাগাদ নোটিশ পর্যবেক্ষণ করে তাৎক্ষণিক ইমেইল অ্যালার্ট প্রদানকারী প্ল্যাটফর্ম।'
                 : 'Automated notice monitoring and instant alerts for All Notice, MRIST, BTEB, and DUET.'}
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-2 text-xs text-slate-500">
-              <span className="inline-flex items-center gap-1">
-                <Send className="w-3.5 h-3.5 text-sky-500" />
-                Telegram Bot API
-              </span>
-              <span>•</span>
               <span className="inline-flex items-center gap-1">
                 <Mail className="w-3.5 h-3.5 text-emerald-500" />
                 Nodemailer SMTP

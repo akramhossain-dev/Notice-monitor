@@ -1,7 +1,7 @@
 # Notice Monitor (NoticeBondhu - নোটিশবন্ধু) 🇧🇩
 
-> **Automated Notice Scraper & Multi-Channel Alert Sentinel for Bangladeshi Students**  
-> Automatically detects new notices on college, education board, and government websites, and pushes instant notifications to subscribers via **Telegram** and **Email**.
+> **Automated Notice Monitor & Email Alert System for Bangladeshi Students**
+> Automatically detects new notices on college, education board, and government websites, then sends SMTP email alerts to subscribers.
 
 ---
 
@@ -10,12 +10,11 @@
 - **Tavily Notice Extraction**: Uses Tavily Extract on each exact source page to monitor All Notice, MRIST, BTEB, and DUET every hour.
 - **Custom-site Scraper**: User-submitted notice pages still use the SSRF-protected Cheerio/axios detector with custom CSS selectors.
 - **Diff & New Notice Isolation**: Detects genuine new circulars and avoids sending duplicate alerts or spamming baseline existing notices on initial runs.
-- **Telegram Bot API**: Push notifications directly to students' Telegram mobile/desktop app with formatted HTML messages and direct PDF links.
 - **Nodemailer SMTP**: Responsive HTML emails in Bangla and English containing official notice details and a secure 1-click unsubscribe link.
 - **Admin Control Suite**:
   - Add / edit / delete monitored websites (name, URL, selector, 15m/1h/6h intervals, toggle).
   - Live scraper test trigger and immediate manual check.
-  - "Simulate Notice" button to test Telegram and Email delivery pipeline end-to-end.
+  - "Simulate Notice" button to test the email delivery pipeline end-to-end.
   - Comprehensive audit logs (scrape checks, duration, alert delivery logs, subscribers).
 - **Bangla + English Support**: Default Bangla with instant toggle switch and Hind Siliguri typography.
 - **Dark & Light Mode**: Auto-persisted theme.
@@ -34,7 +33,7 @@
 │   │   ├── tavily.ts       # Exact-page Tavily Extract client
 │   │   ├── scraper.ts       # Tavily/direct collection, diffing, persistence, alerts
 │   │   ├── scheduler.ts     # node-cron scheduler for periodic checks
-│   │   ├── notifier.ts      # Telegram Bot API & Nodemailer email dispatcher
+│   │   ├── notifier.ts      # Nodemailer SMTP email dispatcher
 │   │   └── routes.ts        # Express REST API routes (/api/*)
 │   ├── /frontend            # React frontend UI
 │   │   ├── types.ts         # Frontend interfaces
@@ -44,7 +43,7 @@
 │   │       ├── Hero.tsx     # Hero banner, stats pills, CTA
 │   │       ├── HowItWorks.tsx # 4-step illustrated guide
 │   │       ├── WebsiteDirectory.tsx # Supported websites catalog & category filter
-│   │       ├── SubscribeView.tsx # Student subscription form & Telegram guide
+│   │       ├── SubscribeView.tsx # Student email subscription form
 │   │       ├── NoticesView.tsx # Searchable, paginated live notices feed
 │   │       ├── AdminDashboard.tsx # Password-protected admin suite & test tools
 │   │       ├── UnsubscribeView.tsx # 1-click unsubscribe handler
@@ -93,27 +92,7 @@ The key is sent as a Bearer token to `https://api.tavily.com/extract`. Each requ
 
 Official Tavily API reference: https://docs.tavily.com/documentation/api-reference/endpoint/extract
 
-### 3. How to Create a Telegram Bot with @BotFather
-
-To send instant Telegram notifications to students:
-
-1. Open Telegram and search for [@BotFather](https://t.me/BotFather).
-2. Send `/newbot` to start creating your bot.
-3. Choose a friendly name (e.g. `NoticeBondhu Alerts`).
-4. Choose a username ending in `bot` (e.g. `NoticeBondhu_bot`).
-5. Copy the generated **HTTP API Token** (e.g., `7123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ`).
-6. Paste the token into your `.env` file:
-   ```env
-   TELEGRAM_BOT_TOKEN="7123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
-   ```
-7. To find your own Telegram Chat ID for testing:
-   - Search for [@userinfobot](https://t.me/userinfobot) on Telegram and send `/start`.
-   - Copy the numerical ID (e.g., `123456789`).
-   - Use this ID in the Admin Panel's **"Test Telegram Connection"** tool!
-
----
-
-### 4. How to Set Up Gmail SMTP App Password
+### 3. How to Set Up Gmail SMTP App Password
 
 To send beautiful HTML email notifications via Gmail:
 
@@ -136,7 +115,7 @@ To send beautiful HTML email notifications via Gmail:
 
 ---
 
-### 5. Data Storage
+### 4. Data Storage
 
 NoticeBondhu currently stores state in `data/db.json`. The file is created automatically and is intentionally ignored by Git because it contains subscriber information and operational logs.
 
@@ -144,7 +123,7 @@ For production, mount a persistent disk and point `NOTICEBONDHU_DATA_DIR` to it 
 
 ---
 
-### 6. How to Deploy to Render or Railway
+### 5. How to Deploy to Render or Railway
 
 #### Option A: Deploy on Render
 1. Push your code to GitHub.
@@ -160,7 +139,6 @@ For production, mount a persistent disk and point `NOTICEBONDHU_DATA_DIR` to it 
    - `ADMIN_PASSWORD=your-long-unique-password`
    - `ADMIN_SESSION_SECRET=at-least-32-random-characters`
    - `TAVILY_API_KEY=...`
-   - `TELEGRAM_BOT_TOKEN=...`
    - `SMTP_HOST=smtp.gmail.com`
    - `SMTP_PORT=587`
    - `SMTP_SECURE=false`
@@ -172,7 +150,7 @@ For production, mount a persistent disk and point `NOTICEBONDHU_DATA_DIR` to it 
 #### Option B: Deploy on Railway
 1. Go to [Railway.app](https://railway.app) and create a **New Project**.
 2. Select **Deploy from GitHub repo**.
-3. Under service settings, add your Environment Variables (`ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `TAVILY_API_KEY`, `TELEGRAM_BOT_TOKEN`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`).
+3. Under service settings, add your Environment Variables (`ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `TAVILY_API_KEY`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`).
 4. Railway will automatically detect Node.js, run `npm run build`, and execute `npm start`.
 
 ---
@@ -188,7 +166,7 @@ NoticeBondhu empowers any student or institution to add their college, universit
 - **SSRF Protection**: Strict host validation; loopback (`127.0.0.1`), link-local/cloud metadata (`169.254.169.254`), and private IPv4/IPv6 CIDR blocks are blocked.
 
 ### 2. User Submission & Auto-Subscription (`POST /api/websites/custom`)
-- **Auto-Subscription**: The submitting user's email (and optional Telegram Chat ID) is automatically subscribed to their new custom portal.
+- **Auto-Subscription**: The submitting user's email is automatically subscribed to their new custom portal.
 - **Duplicate Prevention**: If the normalized URL is already monitored, the system avoids creating duplicates and seamlessly subscribes the user to the existing portal.
 - **Baseline Run**: On the first check, existing notices are cataloged without sending spam alerts.
 - **Quota**: Max 5 custom websites per email.
@@ -204,7 +182,7 @@ NoticeBondhu empowers any student or institution to add their college, universit
 | `/api/websites/test` | POST | Public (Rate-limited) | Test & auto-detect notices from a URL |
 | `/api/websites/custom` | POST | Public (Rate-limited) | Add a custom website & auto-subscribe |
 | `/api/notices` | GET | Public | Search, filter, and paginate detected notices |
-| `/api/subscribe` | POST | Public | Subscribe to notice alerts via email & Telegram |
+| `/api/subscribe` | POST | Public | Subscribe to notice alerts via email |
 | `/api/unsubscribe` | POST | Public | 1-click unsubscribe from alerts |
 | `/api/stats` | GET | Public | Public monitor statistics |
 | `/api/admin/login` | POST | Public | Authenticate admin password |
