@@ -56,7 +56,6 @@ test('admin and subscriber security boundaries work end to end', async () => {
       enabled: true,
       isCustom: true,
       creatorEmail: 'creator@example.com',
-      creatorTelegramChatId: '123456',
       totalNoticesFound: 0
     });
     const publicWebsites = await fetch(`${baseUrl}/api/websites`);
@@ -69,7 +68,6 @@ test('admin and subscriber security boundaries work end to end', async () => {
     assert.ok(privateCreatorSite);
     assert.equal('selector' in privateCreatorSite, false);
     assert.equal('creatorEmail' in privateCreatorSite, false);
-    assert.equal('creatorTelegramChatId' in privateCreatorSite, false);
 
     const subscribe = await fetch(`${baseUrl}/api/subscribe`, {
       method: 'POST',
@@ -77,10 +75,14 @@ test('admin and subscriber security boundaries work end to end', async () => {
       body: JSON.stringify({
         name: 'Test Student',
         email: 'student@example.com',
+        telegramChatId: '999999',
         websiteIds: ['dhaka-education-board']
       })
     });
     assert.equal(subscribe.status, 200);
+    const subscribePayload = await subscribe.json() as { subscriber: Record<string, unknown> };
+    assert.equal('telegramChatId' in subscribePayload.subscriber, false);
+    assert.equal('telegramChatId' in (db.getSubscriberByEmail('student@example.com') as unknown as Record<string, unknown>), false);
     const ownershipToken = db.getSubscriberByEmail('student@example.com')?.unsubToken;
     assert.ok(ownershipToken);
 
@@ -114,6 +116,13 @@ test('admin and subscriber security boundaries work end to end', async () => {
     const subscriberList = await adminSubscribers.json() as Record<string, unknown>[];
     assert.equal(adminSubscribers.status, 200);
     assert.equal('unsubToken' in subscriberList[0], false);
+
+    const removedTelegramEndpoint = await fetch(`${baseUrl}/api/admin/test-telegram`, {
+      method: 'POST',
+      headers: { Cookie: cookie || '', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chatId: '999999' })
+    });
+    assert.equal(removedTelegramEndpoint.status, 404);
 
     const emailOnlyUnsubscribe = await fetch(`${baseUrl}/api/unsubscribe`, {
       method: 'POST',

@@ -4,18 +4,15 @@
  */
 
 import nodemailer, { Transporter } from 'nodemailer';
-import axios from 'axios';
 import { Notice, Subscriber } from './types.js';
 import { db } from './db.js';
 import { escapeHtml, safeNotificationUrl } from './security.js';
 
 export class NotifierService {
   private transporter: Transporter | null = null;
-  private botToken: string;
   private appUrl: string;
 
   constructor() {
-    this.botToken = process.env.TELEGRAM_BOT_TOKEN || '';
     this.appUrl = process.env.APP_URL || 'http://localhost:3000';
     this.initTransporter();
   }
@@ -46,121 +43,18 @@ export class NotifierService {
   }
 
   /**
-   * Dispatch notice alerts to all subscribed users via Telegram and Email
+   * Dispatch notice alerts to all active email subscribers.
    */
   public async dispatchAlerts(notice: Notice, subscribers: Subscriber[]) {
     for (const sub of subscribers) {
       if (!sub.isActive) continue;
 
-      // 1. Telegram Alert
-      if (sub.telegramChatId) {
-        await this.sendTelegramAlert(sub, notice);
-      }
-
-      // 2. Email Alert
       if (sub.email) {
         await this.sendEmailAlert(sub, notice);
       }
 
-      // Subtle pause between dispatches to avoid Telegram/SMTP rate limits
+      // Subtle pause between dispatches to avoid SMTP rate limits.
       await new Promise(r => setTimeout(r, 200));
-    }
-  }
-
-  /**
-   * Send Telegram notification using Telegram Bot API
-   */
-  public async sendTelegramAlert(
-    subscriber: Subscriber,
-    notice: Notice
-  ): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN || this.botToken;
-    const chatId = subscriber.telegramChatId;
-
-    if (!chatId) {
-      return { success: false, error: 'No Telegram Chat ID' };
-    }
-
-    const websiteName = escapeHtml(notice.websiteNameBn || notice.websiteName);
-    const noticeTitle = escapeHtml(notice.title);
-    const publishDate = notice.publishDate ? escapeHtml(notice.publishDate) : '';
-    const noticeLink = escapeHtml(safeNotificationUrl(notice.link));
-    const appUrl = escapeHtml(safeNotificationUrl(this.appUrl));
-    const messageHtml = [
-      `🔔 <b>নতুন নোটিশ প্রকাশিত হয়েছে!</b>`,
-      ``,
-      `🏛 <b>প্রতিষ্ঠান:</b> ${websiteName}`,
-      `📌 <b>শিরোনাম:</b> ${noticeTitle}`,
-      publishDate ? `📅 <b>তারিখ:</b> ${publishDate}` : '',
-      ``,
-      `🔗 <a href="${noticeLink}">👉 মূল নোটিশ / PDF দেখতে এখানে ক্লিক করুন</a>`,
-      ``,
-      `━━━━━━━━━━━━━━━━━━`,
-      `🤖 <i>নোটিশবন্ধু (NoticeBondhu) - স্বয়ংক্রিয় শিক্ষা ও চাকরি নোটিশ অ্যালার্ট</i>`,
-      `🌐 ${appUrl}`
-    ]
-      .filter(line => line !== '')
-      .join('\n');
-
-    if (!botToken || botToken.trim() === '' || botToken.includes('YOUR_')) {
-      // Simulation mode
-      console.log(`[Notifier:Telegram:Simulated] To: ${chatId} | Notice: ${notice.title}`);
-      db.addAlertLog({
-        subscriberId: subscriber.id,
-        subscriberEmail: subscriber.email,
-        telegramChatId: chatId,
-        noticeId: notice.id,
-        noticeTitle: notice.title,
-        websiteName: notice.websiteName,
-        channel: 'telegram',
-        status: 'simulated'
-      });
-      return { success: true, simulated: true };
-    }
-
-    try {
-      const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-      const response = await axios.post(
-        url,
-        {
-          chat_id: chatId,
-          text: messageHtml,
-          parse_mode: 'HTML',
-          disable_web_page_preview: false
-        },
-        { timeout: 8000 }
-      );
-
-      if (response.data && response.data.ok) {
-        db.addAlertLog({
-          subscriberId: subscriber.id,
-          subscriberEmail: subscriber.email,
-          telegramChatId: chatId,
-          noticeId: notice.id,
-          noticeTitle: notice.title,
-          websiteName: notice.websiteName,
-          channel: 'telegram',
-          status: 'sent'
-        });
-        return { success: true };
-      } else {
-        throw new Error(response.data?.description || 'Telegram API returned non-ok status');
-      }
-    } catch (err: any) {
-      const errMsg = err?.response?.data?.description || err?.message || 'Telegram dispatch failed';
-      console.error(`[Notifier:Telegram:Error] ${errMsg}`);
-      db.addAlertLog({
-        subscriberId: subscriber.id,
-        subscriberEmail: subscriber.email,
-        telegramChatId: chatId,
-        noticeId: notice.id,
-        noticeTitle: notice.title,
-        websiteName: notice.websiteName,
-        channel: 'telegram',
-        status: 'failed',
-        error: errMsg
-      });
-      return { success: false, error: errMsg };
     }
   }
 
@@ -305,44 +199,6 @@ export class NotifierService {
     });
   }
 
-  /**
-   * Helper for testing Telegram bot setup directly from the Admin panel
-   */
-  public async testTelegram(chatId: string): Promise<{ success: boolean; message: string }> {
-    const testSub: Subscriber = {
-      id: 'test-user',
-      name: 'এডমিন পরীক্ষক (Admin Tester)',
-      email: 'admin@test.com',
-      telegramChatId: chatId,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      unsubToken: 'test'
-    };
-
-    const testNotice: Notice = {
-      id: 'test-notice-001',
-      websiteId: 'test-site',
-      websiteName: 'NoticeBondhu Test Gateway',
-      websiteNameBn: 'নোটিশবন্ধু টেস্ট গেটওয়ে',
-      title: 'টেলিগ্রাম নোটিফিকেশন সিস্টেম সফলভাবে সংযুক্ত হয়েছে! (Test Alert)',
-      link: this.appUrl,
-      detectedAt: new Date().toISOString(),
-      publishDate: new Date().toLocaleDateString('bn-BD'),
-      category: 'board'
-    };
-
-    const res = await this.sendTelegramAlert(testSub, testNotice);
-    if (res.success && !res.simulated) {
-      return { success: true, message: 'Telegram alert delivered successfully to Chat ID ' + chatId };
-    } else if (res.simulated) {
-      return {
-        success: true,
-        message: 'Bot token not set in .env; test logged in simulation mode successfully.'
-      };
-    } else {
-      return { success: false, message: res.error || 'Failed to send Telegram message' };
-    }
-  }
 }
 
 export const notifier = new NotifierService();

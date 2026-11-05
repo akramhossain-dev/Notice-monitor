@@ -52,7 +52,6 @@ function toPublicWebsite(website: ReturnType<typeof db.getWebsites>[number]) {
   const {
     selector,
     creatorEmail,
-    creatorTelegramChatId,
     lastCheckError,
     fetchMode,
     tavilyExtractUrl,
@@ -156,7 +155,7 @@ apiRouter.post('/websites/custom', async (req, res) => {
       return res.status(429).json({ error: 'Too many custom website submissions' });
     }
 
-    const { name, nameBn, url, category, intervalMinutes, email, telegramChatId, selector, isJsHeavy } = req.body;
+    const { name, nameBn, url, category, intervalMinutes, email, selector, isJsHeavy } = req.body;
 
     if (!name || !url || !email) {
       return res.status(400).json({ error: 'নাম, নোটিশ পেজের URL এবং ইমেইল বাধ্যতামূলক (Name, URL, and Email are required)' });
@@ -183,7 +182,6 @@ apiRouter.post('/websites/custom', async (req, res) => {
       db.subscribe({
         name: name || 'শিক্ষার্থী',
         email,
-        telegramChatId,
         websiteIds: [existingSite.id],
         ownershipToken: req.body.ownershipToken
       });
@@ -214,7 +212,6 @@ apiRouter.post('/websites/custom', async (req, res) => {
       isJsHeavy: !!isJsHeavy,
       isCustom: true,
       creatorEmail: email.trim().toLowerCase(),
-      creatorTelegramChatId: telegramChatId?.trim() || undefined,
       totalNoticesFound: 0
     });
 
@@ -222,7 +219,6 @@ apiRouter.post('/websites/custom', async (req, res) => {
     db.subscribe({
       name: name.trim(),
       email: email.trim(),
-      telegramChatId: telegramChatId?.trim() || undefined,
       websiteIds: [newSite.id]
     });
 
@@ -280,7 +276,7 @@ apiRouter.post('/subscribe', async (req, res) => {
       return res.status(429).json({ error: 'Too many subscription requests' });
     }
 
-    const { name, email, telegramChatId, websiteIds, ownershipToken } = req.body;
+    const { name, email, websiteIds, ownershipToken } = req.body;
 
     if (!email || !email.includes('@')) {
       return res.status(400).json({ error: 'সঠিক ইমেইল ঠিকানা দিন (Valid email is required)' });
@@ -293,7 +289,6 @@ apiRouter.post('/subscribe', async (req, res) => {
     const { subscriber, subscribedCount, isNew } = db.subscribe({
       name: name || 'শিক্ষার্থী',
       email,
-      telegramChatId,
       websiteIds,
       ownershipToken
     });
@@ -301,13 +296,6 @@ apiRouter.post('/subscribe', async (req, res) => {
     if (isNew) {
       notifier.sendSubscriptionWelcome(subscriber).catch(err => {
         console.error('[Routes] Failed to send subscription management email:', err);
-      });
-    }
-
-    // Send a welcome alert / confirmation if telegram ID is given
-    if (telegramChatId) {
-      notifier.testTelegram(telegramChatId).catch(err => {
-        console.warn('[Routes] Welcome telegram ping notice:', err);
       });
     }
 
@@ -319,8 +307,7 @@ apiRouter.post('/subscribe', async (req, res) => {
       subscriber: {
         id: subscriber.id,
         name: subscriber.name,
-        email: subscriber.email,
-        telegramChatId: subscriber.telegramChatId
+        email: subscriber.email
       },
       subscribedCount
     });
@@ -595,19 +582,6 @@ apiRouter.get('/admin/logs', requireAdmin, (_req, res) => {
  */
 apiRouter.get('/admin/subscribers', requireAdmin, (_req, res) => {
   res.json(db.getSubscribers());
-});
-
-/**
- * Test Telegram bot connection
- */
-apiRouter.post('/admin/test-telegram', requireAdmin, async (req, res) => {
-  const { chatId } = req.body;
-  if (!chatId) {
-    return res.status(400).json({ error: 'Telegram Chat ID is required' });
-  }
-
-  const result = await notifier.testTelegram(chatId);
-  res.json(result);
 });
 
 // -----------------------------------------------------------------------------

@@ -20,6 +20,13 @@ interface DatabaseSchema {
   settings?: AdminSettings;
 }
 
+type LegacyWebsite = Website & { creatorTelegramChatId?: string };
+type LegacySubscriber = Subscriber & { telegramChatId?: string };
+type LegacyAlertLog = Omit<AlertLog, 'channel'> & {
+  channel: 'email' | 'telegram';
+  telegramChatId?: string;
+};
+
 const DATA_DIR = path.resolve(process.env.NOTICEBONDHU_DATA_DIR || path.join(process.cwd(), 'data'));
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
@@ -69,6 +76,11 @@ class DatabaseService {
         this.save();
       }
       this.data.websites = reconcileManagedWebsites(this.data.websites);
+      this.data.websites = (this.data.websites as LegacyWebsite[]).map(({ creatorTelegramChatId, ...website }) => website);
+      this.data.subscribers = (this.data.subscribers as LegacySubscriber[]).map(({ telegramChatId, ...subscriber }) => subscriber);
+      this.data.alert_logs = (this.data.alert_logs as LegacyAlertLog[])
+        .filter(log => log.channel === 'email')
+        .map(({ telegramChatId, ...log }) => log as AlertLog);
       this.save();
       this.isLoaded = true;
     } catch (err) {
@@ -269,7 +281,6 @@ class DatabaseService {
   public subscribe(payload: {
     name: string;
     email: string;
-    telegramChatId?: string;
     websiteIds: string[];
     ownershipToken?: string;
   }): { subscriber: Subscriber; subscribedCount: number; isNew: boolean } {
@@ -283,7 +294,6 @@ class DatabaseService {
         id: `sub-${randomUUID()}`,
         name: payload.name.trim(),
         email: cleanEmail,
-        telegramChatId: payload.telegramChatId?.trim() || undefined,
         isActive: true,
         createdAt: new Date().toISOString(),
         unsubToken: randomBytes(32).toString('base64url')
@@ -296,9 +306,6 @@ class DatabaseService {
       // update existing
       subscriber.name = payload.name.trim() || subscriber.name;
       subscriber.isActive = true;
-      if (payload.telegramChatId) {
-        subscriber.telegramChatId = payload.telegramChatId.trim();
-      }
     }
 
     // Remove old subscriptions for this subscriber
