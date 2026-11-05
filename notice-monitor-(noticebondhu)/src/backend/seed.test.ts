@@ -14,6 +14,9 @@ test('default monitor contains the four requested Tavily notice sources', () => 
   );
   assert.equal(SEED_WEBSITES.every(site => site.fetchMode === 'tavily'), true);
   assert.equal(SEED_WEBSITES.every(site => site.intervalMinutes === 60), true);
+  const mrist = SEED_WEBSITES.find(site => site.id === 'mrist-notices');
+  assert.equal(mrist?.name, 'Dr. Mahbubur Rahman Mollah Institute of Science & Technology (MRIST)');
+  assert.equal(mrist?.nameBn, 'ড. মাহবুবুর রহমান মোল্লা ইনস্টিটিউট অব সায়েন্স অ্যান্ড টেকনোলজি (এমআরআইএসটি)');
 });
 
 test('existing data is migrated to the managed sources without losing runtime state', () => {

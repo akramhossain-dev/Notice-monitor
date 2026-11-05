@@ -21,8 +21,8 @@ export const SEED_WEBSITES: Website[] = [
   },
   {
     id: 'mrist-notices',
-    name: 'Mymensingh Residential Institute of Science and Technology (MRIST)',
-    nameBn: 'ময়মনসিংহ রেসিডেনসিয়াল ইনস্টিটিউট অব সায়েন্স অ্যান্ড টেকনোলজি',
+    name: 'Dr. Mahbubur Rahman Mollah Institute of Science & Technology (MRIST)',
+    nameBn: 'ড. মাহবুবুর রহমান মোল্লা ইনস্টিটিউট অব সায়েন্স অ্যান্ড টেকনোলজি (এমআরআইএসটি)',
     url: 'https://mrist.edu.bd/notices',
     selector: 'tavily-extract',
     category: 'college',
